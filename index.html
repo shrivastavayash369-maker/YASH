@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>India Command Room</title>
+  <title>India Command Room - Interactive Map</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <style>
     :root{
       --bg:#071008;
@@ -36,11 +38,12 @@
         linear-gradient(rgba(102,255,102,.08) 1px, transparent 1px),
         linear-gradient(90deg, rgba(102,255,102,.08) 1px, transparent 1px);
       background-size:40px 40px;
+      z-index:1;
     }
     .topbar{
       display:flex;justify-content:space-between;align-items:center;
       padding:16px 20px;background:rgba(9,16,9,.95);
-      border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;
+      border-bottom:1px solid var(--line);position:sticky;top:0;z-index:100;
       box-shadow:var(--shadow);
     }
     .brand{
@@ -55,11 +58,7 @@
       color:var(--green2);font-size:12px;letter-spacing:2px;text-transform:uppercase;
       background:rgba(102,255,102,.08);
     }
-    .wrap{padding:18px;max-width:1600px;margin:0 auto}
-    .hero{
-      display:grid;grid-template-columns:1.7fr 1fr;gap:16px;
-      margin-bottom:16px;
-    }
+    .wrap{padding:18px;max-width:1400px;margin:0 auto}
     .panel{
       background:linear-gradient(180deg, rgba(19,33,19,.96), rgba(10,18,10,.96));
       border:1px solid rgba(102,255,102,.18);
@@ -76,81 +75,99 @@
       margin:0;font-size:14px;letter-spacing:2px;text-transform:uppercase;color:var(--green2);
     }
     .panel-body{padding:16px}
-    .map-box{
-      height:500px;border-radius:12px;position:relative;overflow:hidden;
-      background:
-        radial-gradient(circle at center, rgba(102,255,102,.10), transparent 60%),
-        linear-gradient(180deg, #081108, #0b140b);
+    
+    #mapContainer{
+      height:600px;
+      border-radius:12px;
+      overflow:hidden;
+      position:relative;
+      background:linear-gradient(180deg, #081108, #0b140b);
       border:1px solid rgba(102,255,102,.15);
-      display:flex;justify-content:center;align-items:center;
     }
-    .map-grid{
-      position:absolute;inset:0;opacity:.16;
-      background-image:
-        linear-gradient(rgba(102,255,102,.2) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(102,255,102,.2) 1px, transparent 1px);
-      background-size:32px 32px;
+    
+    #map{
+      height:100%;
+      width:100%;
     }
-    svg{
-      width:90%;height:90%;max-width:100%;max-height:100%;
-      filter:drop-shadow(0 0 15px rgba(102,255,102,.2));
+    
+    .leaflet-container{
+      background:linear-gradient(180deg, #081108, #0b140b) !important;
+      font-family:Arial, sans-serif;
     }
-    .india-border{
-      fill:rgba(102,255,102,.08);
-      stroke:rgba(102,255,102,.4);
-      stroke-width:2;
+    
+    .leaflet-control{
+      background:rgba(19,33,19,.96) !important;
+      border:1px solid rgba(102,255,102,.3) !important;
+      box-shadow:0 2px 10px rgba(0,0,0,.3) !important;
     }
-    .state-border{
-      fill:none;
-      stroke:rgba(102,255,102,.15);
-      stroke-width:0.5;
+    
+    .leaflet-control-zoom-in, .leaflet-control-zoom-out{
+      color:var(--green) !important;
+      background:rgba(9,16,9,.9) !important;
+      border:1px solid rgba(102,255,102,.3) !important;
     }
-    .international-border{
-      fill:none;
-      stroke:rgba(102,255,102,.5);
-      stroke-width:2;
-      stroke-dasharray:5,5;
+    
+    .leaflet-control-zoom-in:hover, .leaflet-control-zoom-out:hover{
+      background:rgba(102,255,102,.2) !important;
+      color:var(--green2) !important;
     }
-    .conflict-marker{
-      fill:var(--danger);
-      filter:drop-shadow(0 0 10px rgba(255,107,107,.8));
-      animation:pulse-marker 1.5s infinite;
+    
+    .leaflet-popup-content-wrapper{
+      background:rgba(19,33,19,.95) !important;
+      border:1px solid rgba(102,255,102,.3) !important;
+      border-radius:8px;
     }
-    @keyframes pulse-marker{0%,100%{r:6px;opacity:1}50%{r:9px;opacity:0.7}}
-    .border-label{
-      fill:var(--green2);
-      font-size:10px;
-      font-weight:bold;
-      text-anchor:middle;
+    
+    .leaflet-popup-content{
+      color:var(--text) !important;
+      font-size:12px;
     }
+    
+    .leaflet-popup-tip{
+      background:rgba(19,33,19,.95) !important;
+    }
+    
     .legend{
-      display:flex;gap:10px;flex-wrap:wrap;margin-top:14px
+      display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
+      gap:15px;margin-top:20px;
     }
-    .chip{
-      border:1px solid rgba(102,255,102,.22);border-radius:999px;
-      padding:8px 12px;background:rgba(255,255,255,.03);
-      font-size:12px;color:var(--muted)
-    }
-    .chip strong{color:var(--green2)}
-    .stats{
-      display:grid;grid-template-columns:repeat(3,1fr);gap:12px;
-    }
-    .stat{
-      padding:16px;border-radius:14px;background:rgba(255,255,255,.03);
-      border:1px solid rgba(102,255,102,.16);
-    }
-    .stat .num{font-size:28px;font-weight:700;color:var(--green)}
-    .stat .lab{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:6px}
-    .stack{display:grid;gap:16px}
-    .zone{
+    
+    .legend-item{
       border:1px solid rgba(102,255,102,.14);
       background:rgba(255,255,255,.03);
-      border-radius:14px;padding:14px;
+      border-radius:10px;padding:12px;
+      display:flex;align-items:center;gap:10px;
     }
-    .zone h3{
-      margin:0 0 8px;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--green2)
+    
+    .legend-color{
+      width:20px;height:20px;border-radius:3px;flex-shrink:0;
     }
-    .zone p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+    
+    .legend-text{
+      font-size:12px;color:var(--muted);
+    }
+    
+    .legend-text strong{color:var(--green2)}
+    
+    .info-grid{
+      display:grid;grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));
+      gap:12px;margin-top:16px;
+    }
+    
+    .info-card{
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(102,255,102,.14);
+      border-radius:10px;padding:12px;
+    }
+    
+    .info-card h3{
+      margin:0 0 6px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--green2);
+    }
+    
+    .info-card p{
+      margin:0;font-size:11px;color:var(--muted);line-height:1.4;
+    }
+    
     .ticker{
       margin-top:16px;
       white-space:nowrap;overflow:hidden;
@@ -158,26 +175,28 @@
       border-bottom:1px solid rgba(102,255,102,.14);
       background:rgba(255,255,255,.03);
     }
+    
     .ticker span{
       display:inline-block;padding:12px 0;
-      animation:scroll 22s linear infinite;
-      color:var(--green2);font-size:13px;letter-spacing:1px;
+      animation:scroll 20s linear infinite;
+      color:var(--green2);font-size:12px;letter-spacing:1px;
     }
+    
     @keyframes scroll{from{transform:translateX(100%)}to{transform:translateX(-100%)}}
-    .news-list{display:grid;gap:10px}
-    .news-item{
-      padding:12px;border-radius:12px;background:rgba(0,0,0,.22);
-      border:1px solid rgba(102,255,102,.12);
-    }
-    .news-item .src{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--warn)}
-    .news-item .title{margin-top:4px;font-size:14px;color:var(--text);line-height:1.4}
+    
     .footer{
       padding:16px 0 8px;color:var(--muted);font-size:12px;text-align:center;
     }
-    @media (max-width: 980px){
-      .hero{grid-template-columns:1fr}
-      .stats{grid-template-columns:1fr}
-      .map-box{height:400px}
+    
+    .zoom-hint{
+      position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.6);
+      padding:8px 12px;border-radius:6px;color:var(--green2);font-size:11px;
+      z-index:10;border:1px solid rgba(102,255,102,.3);
+    }
+    
+    @media (max-width: 768px){
+      #mapContainer{height:400px}
+      .legend{grid-template-columns:1fr}
     }
   </style>
 </head>
@@ -187,158 +206,239 @@
   <header class="topbar">
     <div class="brand">
       <h1>India Command Room</h1>
-      <small>Secure border monitoring dashboard</small>
+      <small>Interactive Border Monitoring Dashboard</small>
     </div>
-    <div class="status-pill">LIVE • GREEN STATUS • 24/7</div>
+    <div class="status-pill">LIVE • FULL MAP • ZOOMABLE</div>
   </header>
 
   <main class="wrap">
-    <section class="hero">
-      <div class="panel">
-        <div class="panel-head">
-          <h2>Border Overview Map - Complete India Map</h2>
-          <div style="color:var(--muted);font-size:12px;letter-spacing:1px">All Borders • All States • Real-time Monitoring</div>
-        </div>
-        <div class="panel-body">
-          <div class="map-box">
-            <div class="map-grid"></div>
-            <svg viewBox="0 0 800 900" xmlns="http://www.w3.org/2000/svg">
-              <!-- India Complete Map (Simplified but accurate outline) -->
-              <path class="india-border" d="M 400 50 L 500 80 L 550 120 L 600 150 L 650 180 L 680 220 L 700 270 L 710 320 L 720 370 L 720 420 L 715 470 L 700 500 L 680 520 L 650 530 L 620 535 L 580 540 L 550 545 L 520 548 L 500 550 L 480 555 L 450 560 L 420 562 L 390 560 L 360 558 L 330 560 L 300 565 L 270 570 L 240 572 L 210 570 L 180 565 L 150 560 L 130 550 L 110 540 L 90 525 L 80 500 L 75 470 L 70 420 L 68 370 L 70 320 L 75 270 L 85 220 L 100 180 L 120 150 L 150 120 L 200 80 L 250 60 L 300 50 L 350 45 L 400 50 Z"/>
-              
-              <!-- Pakistan Border (International) -->
-              <path class="international-border" d="M 400 50 L 300 100 L 250 150 L 200 200 L 150 240 L 130 280"/>
-              
-              <!-- China Border (International) -->
-              <path class="international-border" d="M 400 50 L 500 80 L 550 120 L 600 150 L 650 180 L 680 220"/>
-              
-              <!-- Myanmar Border (International) -->
-              <path class="international-border" d="M 680 520 L 700 500 L 720 370 L 720 420"/>
-              
-              <!-- Bangladesh Border (International) -->
-              <path class="international-border" d="M 480 550 L 520 548 L 550 545 L 580 540"/>
-              
-              <!-- Conflict Hotspots -->
-              <circle class="conflict-marker" cx="220" cy="250" r="6"/>
-              <text class="border-label" x="220" y="270" font-size="9">Kashmir</text>
-              
-              <circle class="conflict-marker" cx="600" cy="160" r="5"/>
-              <text class="border-label" x="600" y="175" font-size="8">LAC</text>
-              
-              <circle class="conflict-marker" cx="700" cy="440" r="4"/>
-              <text class="border-label" x="700" y="455" font-size="8">NE</text>
-              
-              <!-- Key Cities/Regions -->
-              <circle cx="400" cy="500" r="3" fill="var(--green)" opacity="0.6"/>
-              <text class="border-label" x="400" y="520" font-size="8">New Delhi</text>
-              
-              <circle cx="350" cy="600" r="3" fill="var(--green)" opacity="0.6"/>
-              <text class="border-label" x="350" y="620" font-size="8">Mumbai</text>
-              
-              <circle cx="500" cy="650" r="3" fill="var(--green)" opacity="0.6"/>
-              <text class="border-label" x="500" y="670" font-size="8">Chennai</text>
-              
-              <circle cx="550" cy="700" r="3" fill="var(--green)" opacity="0.6"/>
-              <text class="border-label" x="550" y="720" font-size="8">Bangalore</text>
-              
-              <circle cx="450" cy="750" r="3" fill="var(--green)" opacity="0.6"/>
-              <text class="border-label" x="450" y="770" font-size="8">Kochi</text>
-              
-              <!-- Border Region Labels -->
-              <text class="border-label" x="150" y="180" font-size="10" fill="rgba(102,255,102,0.7)">PAKISTAN</text>
-              <text class="border-label" x="650" y="100" font-size="10" fill="rgba(102,255,102,0.7)">CHINA/TIBET</text>
-              <text class="border-label" x="750" y="400" font-size="10" fill="rgba(102,255,102,0.7)">MYANMAR</text>
-              <text class="border-label" x="480" y="580" font-size="10" fill="rgba(102,255,102,0.7)">BANGLADESH</text>
-            </svg>
-          </div>
-          <div class="legend">
-            <div class="chip"><strong style="color:var(--danger)">●</strong> Conflict Zone</div>
-            <div class="chip"><strong style="color:var(--green)">●</strong> Major Cities</div>
-            <div class="chip"><strong>━ ━</strong> International Border</div>
-            <div class="chip"><strong>━</strong> State Boundary</div>
-            <div class="chip">4 Land Borders • 7,517 km perimeter</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="stack">
-        <div class="panel">
-          <div class="panel-head"><h2>Operational Stats</h2></div>
-          <div class="panel-body">
-            <div class="stats">
-              <div class="stat"><div class="num">4</div><div class="lab">Land Borders</div></div>
-              <div class="stat"><div class="num">28</div><div class="lab">States & UTs</div></div>
-              <div class="stat"><div class="num">24/7</div><div class="lab">Active Monitoring</div></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="panel">
-          <div class="panel-head"><h2>Border Sectors</h2></div>
-          <div class="panel-body">
-            <div class="zone">
-              <h3>Western Sector</h3>
-              <p>Pakistan border: Gujarat, Rajasthan, Punjab, Himachal Pradesh</p>
-            </div>
-            <div class="zone" style="margin-top:10px">
-              <h3>Northern Sector</h3>
-              <p>China/Tibet border: Ladakh, Himachal Pradesh, Uttarakhand, Sikkim, Arunachal Pradesh</p>
-            </div>
-            <div class="zone" style="margin-top:10px">
-              <h3>Eastern Sector</h3>
-              <p>Myanmar & Bangladesh: Mizoram, Manipur, Nagaland, Meghalaya, Tripura</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <section class="panel">
       <div class="panel-head">
-        <h2>Border Information</h2>
-        <div style="color:var(--muted);font-size:12px">Verified data</div>
+        <h2>🗺️ Complete India Map - Interactive View</h2>
+        <div style="color:var(--muted);font-size:12px">Click & Zoom • Drag • Full Border Coverage</div>
       </div>
       <div class="panel-body">
-        <div class="news-list" id="newsList">
-          <div class="news-item">
-            <div class="src">Pakistan Border</div>
-            <div class="title">3,323 km international boundary. States: Punjab, Rajasthan, Gujarat, Jammu & Kashmir</div>
-          </div>
-          <div class="news-item">
-            <div class="src">China Border (LAC)</div>
-            <div class="title">3,488 km Line of Actual Control. States: Ladakh, Himachal Pradesh, Sikkim, Arunachal Pradesh</div>
-          </div>
-          <div class="news-item">
-            <div class="src">Bangladesh Border</div>
-            <div class="title">4,096 km shared border. States: West Bengal, Assam, Meghalaya, Tripura, Mizoram</div>
-          </div>
-          <div class="news-item">
-            <div class="src">Myanmar Border</div>
-            <div class="title">1,468 km international boundary. States: Nagaland, Manipur, Mizoram, Arunachal Pradesh</div>
-          </div>
+        <div id="mapContainer">
+          <div id="map"></div>
+          <div class="zoom-hint">Use +/- buttons or scroll to zoom</div>
         </div>
-      </div>
-      <div class="ticker">
-        <span id="tickerText">INDIA COMPLETE MAP • 28 STATES & UTS • 7,517 KM BORDER PERIMETER • REAL-TIME MONITORING • ALL SECTORS ACTIVE •</span>
       </div>
     </section>
 
-    <div class="footer">India Command Room - Complete Border Monitoring Dashboard</div>
+    <section class="panel" style="margin-top:20px">
+      <div class="panel-head">
+        <h2>Map Legend & Border Information</h2>
+      </div>
+      <div class="panel-body">
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-color" style="background:rgba(102,255,102,.3);border:2px solid rgba(102,255,102,.6);"></div>
+            <div class="legend-text"><strong>India Territory</strong> - 28 States & UTs</div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background:var(--danger);"></div>
+            <div class="legend-text"><strong>Conflict Zones</strong> - Active Hotspots</div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background:var(--warn);"></div>
+            <div class="legend-text"><strong>Border Cities</strong> - Strategic Locations</div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="border:2px solid rgba(102,255,102,.8);background:transparent;"></div>
+            <div class="legend-text"><strong>International Borders</strong> - 4 Countries</div>
+          </div>
+        </div>
+
+        <div class="info-grid" style="margin-top:20px">
+          <div class="info-card">
+            <h3>🇵🇰 Pakistan Border</h3>
+            <p><strong>Length:</strong> 3,323 km<br><strong>States:</strong> Punjab, Rajasthan, Gujarat, J&K<br><strong>Status:</strong> Monitored 24/7</p>
+          </div>
+          <div class="info-card">
+            <h3>🇨🇳 China/Tibet Border (LAC)</h3>
+            <p><strong>Length:</strong> 3,488 km<br><strong>States:</strong> Ladakh, HP, Sikkim, AP<br><strong>Status:</strong> Active Monitoring</p>
+          </div>
+          <div class="info-card">
+            <h3>🇧🇩 Bangladesh Border</h3>
+            <p><strong>Length:</strong> 4,096 km<br><strong>States:</strong> WB, Assam, Meghalaya, Tripura, Mizoram<br><strong>Status:</strong> Secure</p>
+          </div>
+          <div class="info-card">
+            <h3>🇲🇲 Myanmar Border</h3>
+            <p><strong>Length:</strong> 1,468 km<br><strong>States:</strong> Nagaland, Manipur, Mizoram, AP<br><strong>Status:</strong> Monitored</p>
+          </div>
+        </div>
+
+        <div style="margin-top:16px;padding:12px;background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.3);border-radius:8px;">
+          <p style="margin:0;font-size:12px;color:var(--text);line-height:1.5;">
+            <strong>ℹ️ Total Border Perimeter: 7,517 km</strong> | <strong>Land Borders: 4</strong> | <strong>Coastal Length: 7,516 km</strong> | 
+            <strong>Total States/UTs: 28</strong> | Real-time monitoring across all sectors
+          </p>
+        </div>
+      </div>
+
+      <div class="ticker">
+        <span id="tickerText">INTERACTIVE MAP ACTIVE • ALL BORDERS DISPLAYED • ZOOM TO VIEW DETAILS • REAL-TIME MONITORING • CONFLICT ZONES MARKED •</span>
+      </div>
+    </section>
+
+    <div class="footer">India Command Room - Complete Interactive Border Monitoring System</div>
   </main>
 
   <script>
+    // Initialize map centered on India
+    const map = L.map('map', {
+      center: [20.5937, 78.9629],
+      zoom: 5,
+      minZoom: 4,
+      maxZoom: 12,
+      zoomControl: true,
+      scrollWheelZoom: true,
+      attributionControl: false
+    });
+
+    // Custom dark tile layer
+    const darkTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      opacity: 0.7,
+      maxZoom: 12
+    });
+    darkTileLayer.addTo(map);
+
+    // Add a semi-transparent overlay for India
+    const indiaOutline = L.geoJSON(null, {
+      style: {
+        color: '#66ff66',
+        weight: 3,
+        opacity: 0.8,
+        fillColor: '#66ff66',
+        fillOpacity: 0.1
+      }
+    });
+
+    // Simple India boundary (approximate)
+    const indiaBounds = {
+      type: 'Feature',
+      geometry: {
+        type: 'Polygon',
+        coordinates: [[
+          [68.176, 37.414],
+          [97.413, 37.414],
+          [97.413, 6.745],
+          [68.176, 6.745],
+          [68.176, 37.414]
+        ]]
+      }
+    };
+
+    indiaOutline.addData(indiaBounds);
+    indiaOutline.addTo(map);
+
+    // Conflict zones with details
+    const conflictZones = [
+      {
+        name: 'Kashmir Region',
+        coords: [34.5, 75.5],
+        status: 'Active Monitoring',
+        severity: 'High',
+        description: 'Indo-Pakistan border dispute area. 24/7 surveillance active.'
+      },
+      {
+        name: 'Ladakh (LAC)',
+        coords: [34.2, 77.5],
+        status: 'Active Monitoring',
+        severity: 'High',
+        description: 'Indo-China border dispute. Line of Actual Control.'
+      },
+      {
+        name: 'Sikkim Border',
+        coords: [27.7, 88.5],
+        status: 'Stable',
+        severity: 'Medium',
+        description: 'Indo-China border. Strategic himalayan region.'
+      },
+      {
+        name: 'Arunachal Pradesh',
+        coords: [28.5, 93.5],
+        status: 'Active Monitoring',
+        severity: 'Medium',
+        description: 'Indo-China border. Northeast strategic region.'
+      },
+      {
+        name: 'Northeast Sector',
+        coords: [24.5, 92.5],
+        status: 'Monitored',
+        severity: 'Medium',
+        description: 'Myanmar-India border. Nagaland, Manipur, Mizoram regions.'
+      }
+    ];
+
+    // Add conflict zone markers
+    conflictZones.forEach(zone => {
+      const marker = L.circleMarker([zone.coords[0], zone.coords[1]], {
+        radius: 8,
+        fillColor: '#ff6b6b',
+        color: '#ff6b6b',
+        weight: 2,
+        opacity: 0.8,
+        fillOpacity: 0.7
+      }).addTo(map);
+
+      marker.bindPopup(`
+        <div style="font-size:12px;">
+          <strong style="color:#66ff66;font-size:13px;">${zone.name}</strong><br>
+          <span style="color:#9dff9d;">Status:</span> ${zone.status}<br>
+          <span style="color:#9dff9d;">Severity:</span> ${zone.severity}<br>
+          <span style="color:#9dff9d;">Info:</span> ${zone.description}
+        </div>
+      `);
+    });
+
+    // Strategic border cities
+    const borderCities = [
+      { name: 'Srinagar', coords: [34.083, 75.571], region: 'Kashmir' },
+      { name: 'Amritsar', coords: [31.634, 74.872], region: 'Punjab' },
+      { name: 'Jodhpur', coords: [26.238, 73.024], region: 'Rajasthan' },
+      { name: 'Jaisalmer', coords: [26.924, 70.899], region: 'Rajasthan' },
+      { name: 'Gandhinagar', coords: [23.213, 72.635], region: 'Gujarat' },
+      { name: 'Shimla', coords: [31.779, 77.171], region: 'Himachal Pradesh' },
+      { name: 'Dehradun', coords: [30.316, 78.032], region: 'Uttarakhand' },
+      { name: 'Imphal', coords: [24.817, 94.779], region: 'Manipur' },
+      { name: 'Aizawl', coords: [23.188, 92.703], region: 'Mizoram' },
+      { name: 'Dimapur', coords: [25.906, 93.721], region: 'Nagaland' }
+    ];
+
+    // Add city markers
+    borderCities.forEach(city => {
+      const marker = L.circleMarker([city.coords[0], city.coords[1]], {
+        radius: 5,
+        fillColor: '#ffd166',
+        color: '#ffd166',
+        weight: 1,
+        opacity: 0.8,
+        fillOpacity: 0.6
+      }).addTo(map);
+
+      marker.bindPopup(`
+        <div style="font-size:11px;">
+          <strong style="color:#66ff66;">${city.name}</strong><br>
+          <span style="color:#9dff9d;">Region:</span> ${city.region}
+        </div>
+      `);
+    });
+
+    // Update ticker
     const headlines = [
-      "All 4 international borders under continuous surveillance.",
-      "28 states and union territories mapped and monitored.",
-      "Conflict zones highlighted for situational awareness.",
-      "Real-time data integration across all border sectors."
+      "All borders under real-time surveillance.",
+      "Zoom in to view specific conflict zones and border cities.",
+      "5 major conflict zones marked for monitoring.",
+      "10 strategic border cities highlighted.",
+      "Interactive map supports full zoom capability."
     ];
     let i = 0;
     setInterval(() => {
       document.getElementById("tickerText").textContent =
         (headlines[i % headlines.length] + " • ").repeat(3);
       i++;
-    }, 4000);
+    }, 5000);
   </script>
 </body>
 </html>
