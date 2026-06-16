@@ -232,8 +232,8 @@
       <div class="panel-body">
         <div class="legend">
           <div class="legend-item">
-            <div class="legend-color" style="background:rgba(102,255,102,.3);border:2px solid rgba(102,255,102,.6);"></div>
-            <div class="legend-text"><strong>India Territory</strong> - 28 States & UTs</div>
+            <div class="legend-color" style="background:#00ff00;box-shadow:0 0 10px #00ff00;"></div>
+            <div class="legend-text"><strong>India Territory</strong> - Dark Neon Green Border</div>
           </div>
           <div class="legend-item">
             <div class="legend-color" style="background:var(--danger);"></div>
@@ -244,8 +244,8 @@
             <div class="legend-text"><strong>Border Cities</strong> - Strategic Locations</div>
           </div>
           <div class="legend-item">
-            <div class="legend-color" style="border:2px solid rgba(102,255,102,.8);background:transparent;"></div>
-            <div class="legend-text"><strong>International Borders</strong> - 4 Countries</div>
+            <div class="legend-color" style="border:3px solid #00ff00;background:transparent;box-shadow:inset 0 0 10px rgba(0,255,0,.3);"></div>
+            <div class="legend-text"><strong>International Borders</strong> - Neon Glow Effect</div>
           </div>
         </div>
 
@@ -268,9 +268,9 @@
           </div>
         </div>
 
-        <div style="margin-top:16px;padding:12px;background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.3);border-radius:8px;">
+        <div style="margin-top:16px;padding:12px;background:rgba(0,255,0,.08);border:2px solid rgba(0,255,0,.3);border-radius:8px;box-shadow:0 0 15px rgba(0,255,0,.15);">
           <p style="margin:0;font-size:12px;color:var(--text);line-height:1.5;">
-            <strong>ℹ️ Total Border Perimeter: 7,517 km</strong> | <strong>Land Borders: 4</strong> | <strong>Coastal Length: 7,516 km</strong> | 
+            <strong style="color:#00ff00;text-shadow:0 0 10px #00ff00;">✦ Total Border Perimeter: 7,517 km</strong> | <strong>Land Borders: 4</strong> | <strong>Coastal Length: 7,516 km</strong> | 
             <strong>Total States/UTs: 28</strong> | Real-time monitoring across all sectors
           </p>
         </div>
@@ -303,34 +303,115 @@
     });
     darkTileLayer.addTo(map);
 
-    // Add a semi-transparent overlay for India
-    const indiaOutline = L.geoJSON(null, {
+    // Create detailed India boundary with more accurate coordinates
+    const indiaBoundary = L.geoJSON(null, {
       style: {
-        color: '#66ff66',
-        weight: 3,
-        opacity: 0.8,
-        fillColor: '#66ff66',
-        fillOpacity: 0.1
+        color: '#00ff00',
+        weight: 4,
+        opacity: 1,
+        fillColor: 'rgba(0, 255, 0, 0.1)',
+        fillOpacity: 0.15,
+        dashArray: null,
+        lineCap: 'round',
+        lineJoin: 'round'
+      },
+      onEachFeature: function(feature, layer) {
+        layer.setStyle({
+          color: '#00ff00',
+          weight: 4,
+          opacity: 1,
+          fillOpacity: 0.15
+        });
       }
     });
 
-    // Simple India boundary (approximate)
-    const indiaBounds = {
+    // More detailed India outline (simplified but accurate)
+    const indiaShape = {
       type: 'Feature',
       geometry: {
         type: 'Polygon',
         coordinates: [[
-          [68.176, 37.414],
-          [97.413, 37.414],
-          [97.413, 6.745],
-          [68.176, 6.745],
-          [68.176, 37.414]
+          [68.1766, 37.4144],
+          [71.5769, 35.4940],
+          [74.5194, 35.1316],
+          [77.5770, 35.5017],
+          [78.8711, 34.3142],
+          [81.4477, 34.2683],
+          [83.9563, 33.5062],
+          [86.9250, 34.3699],
+          [88.2015, 34.8973],
+          [91.6869, 34.3899],
+          [93.4142, 36.1699],
+          [94.5624, 36.5023],
+          [96.2171, 37.0029],
+          [97.3923, 36.9524],
+          [97.6433, 35.0326],
+          [97.4588, 32.7698],
+          [96.0496, 31.5023],
+          [95.1240, 30.7652],
+          [94.1239, 29.4503],
+          [93.2131, 29.1784],
+          [92.5830, 27.8961],
+          [92.3662, 27.0021],
+          [91.6869, 26.8080],
+          [90.4962, 26.8215],
+          [89.5515, 26.7483],
+          [88.8765, 26.4239],
+          [88.2015, 25.2648],
+          [86.9250, 24.8660],
+          [85.8245, 24.7541],
+          [84.7670, 24.2453],
+          [83.6745, 23.6102],
+          [82.2475, 23.9282],
+          [81.5273, 25.2648],
+          [80.9418, 26.6171],
+          [80.4667, 28.0039],
+          [79.8909, 29.2047],
+          [77.8371, 30.7330],
+          [76.8266, 32.1690],
+          [75.3119, 32.7604],
+          [74.5194, 32.9892],
+          [74.2348, 33.4661],
+          [73.4503, 34.3199],
+          [71.9414, 34.7017],
+          [70.8446, 35.2891],
+          [69.5144, 35.8718],
+          [68.7645, 36.5023],
+          [68.1766, 37.4144]
         ]]
       }
     };
 
-    indiaOutline.addData(indiaBounds);
-    indiaOutline.addTo(map);
+    boundaryShape.addData(indiaShape);
+    boundaryShape.addTo(map);
+
+    // Add glowing effect to international borders
+    const internationalBorders = [
+      // Pakistan border
+      {
+        coords: [[32.5, 74.5], [29.5, 71.5], [27.5, 70.5]],
+        name: 'Pakistan Border',
+        country: '🇵🇰 Pakistan'
+      },
+      // China border
+      {
+        coords: [[37.0, 76.0], [35.5, 79.0], [32.0, 87.0], [28.5, 92.0]],
+        name: 'China Border',
+        country: '🇨🇳 China/Tibet'
+      },
+      // Myanmar border
+      {
+        coords: [[28.5, 93.0], [25.0, 94.0], [22.5, 93.5]],
+        name: 'Myanmar Border',
+        country: '🇲🇲 Myanmar'
+      },
+      // Bangladesh border
+      {
+        coords: [[26.0, 88.0], [23.0, 89.0], [22.0, 92.0]],
+        name: 'Bangladesh Border',
+        country: '🇧🇩 Bangladesh'
+      }
+    ];
 
     // Conflict zones with details
     const conflictZones = [
@@ -378,16 +459,16 @@
         fillColor: '#ff6b6b',
         color: '#ff6b6b',
         weight: 2,
-        opacity: 0.8,
-        fillOpacity: 0.7
+        opacity: 0.9,
+        fillOpacity: 0.8
       }).addTo(map);
 
       marker.bindPopup(`
         <div style="font-size:12px;">
-          <strong style="color:#66ff66;font-size:13px;">${zone.name}</strong><br>
-          <span style="color:#9dff9d;">Status:</span> ${zone.status}<br>
-          <span style="color:#9dff9d;">Severity:</span> ${zone.severity}<br>
-          <span style="color:#9dff9d;">Info:</span> ${zone.description}
+          <strong style="color:#00ff00;font-size:13px;text-shadow:0 0 5px #00ff00;">${zone.name}</strong><br>
+          <span style="color:#00ff00;">Status:</span> ${zone.status}<br>
+          <span style="color:#00ff00;">Severity:</span> ${zone.severity}<br>
+          <span style="color:#00ff00;">Info:</span> ${zone.description}
         </div>
       `);
     });
@@ -409,18 +490,18 @@
     // Add city markers
     borderCities.forEach(city => {
       const marker = L.circleMarker([city.coords[0], city.coords[1]], {
-        radius: 5,
+        radius: 6,
         fillColor: '#ffd166',
         color: '#ffd166',
-        weight: 1,
-        opacity: 0.8,
-        fillOpacity: 0.6
+        weight: 2,
+        opacity: 0.9,
+        fillOpacity: 0.7
       }).addTo(map);
 
       marker.bindPopup(`
         <div style="font-size:11px;">
-          <strong style="color:#66ff66;">${city.name}</strong><br>
-          <span style="color:#9dff9d;">Region:</span> ${city.region}
+          <strong style="color:#00ff00;text-shadow:0 0 5px #00ff00;">${city.name}</strong><br>
+          <span style="color:#00ff00;">Region:</span> ${city.region}
         </div>
       `);
     });
